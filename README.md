@@ -173,12 +173,130 @@ We can verify that it is also now reflected in S3 event notification :
 
 <img width="1489" alt="Screenshot 2025-01-27 at 3 06 29 PM" src="https://github.com/user-attachments/assets/811eec6d-7b14-47b6-9b7d-f4e6d1a4cedc" />
 
+Let us now create SQS queue where Lambda can push messages.
+
+Click Create Queue. Enter Queue name and it should be standard Queue. Leave Everything default.
+
+<img width="1362" alt="Screenshot 2025-01-27 at 5 05 53 PM" src="https://github.com/user-attachments/assets/e948dcb2-d604-48e2-8b1b-9a2c4764d95d" />
+
+With this Step 2 is completed and We should be able to now invoke API gateway and upload file in S3. This in turn should trigger Lambda function which should push messages to SQS.
+
+## Step 3 : Lambda to consume Message from SQS and saving into Dynamo dB.
+
+We need to create Lambda function which will pick messages from SQS. Lets create a role for Lambda which gives permissions for SQS execution.
+
+click Create Role and Add permissions AWSLambdaSQSQueueExecutionRole policy .
+
+Also, as this lambda function will also write to dynamo db, we need to add one customer managed custom policy as shown below :
+
+<img width="1484" alt="Screenshot 2025-01-27 at 5 11 30 PM" src="https://github.com/user-attachments/assets/50954c3a-af71-436e-abd6-cbba14b8c89e" />
+
+Here is the custom policy :
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DynamoDBIndexAndStreamAccess",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:GetShardIterator",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:DescribeStream",
+                "dynamodb:GetRecords",
+                "dynamodb:ListStreams"
+            ],
+            "Resource": [
+                "arn:aws:dynamodb:us-east-1:215472211497:table/Books/index/*",
+                "arn:aws:dynamodb:us-east-1:215472211497:table/Books/stream/*"
+            ]
+        },
+        {
+            "Sid": "DynamoDBTableAccess",
+            "Effect": "Allow",
+            "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:PutItem",
+                "dynamodb:DescribeTable",
+                "dynamodb:DeleteItem",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:Query",
+                "dynamodb:UpdateItem"
+            ],
+            "Resource": "arn:aws:dynamodb:us-east-1:215472211497:table/*"
+        },
+        {
+            "Sid": "DynamoDBDescribeLimitsAccess",
+            "Effect": "Allow",
+            "Action": "dynamodb:DescribeLimits",
+            "Resource": [
+                "arn:aws:dynamodb:*:123456789012:table/*",
+                "arn:aws:dynamodb:*:123456789012:table/*/index/*"
+            ]
+        }
+    ]
+}
 
 
+Now, Lets create a Dynamo DB table. Enter table name and parititon Key as "id". Rest everything we can keep as default.
 
+<img width="1707" alt="Screenshot 2025-01-27 at 5 18 32 PM" src="https://github.com/user-attachments/assets/76967d89-7acc-419b-a898-b06ebf617c23" />
 
+Lets now Create a lambda function using Spring boot. Navigate to https://start.spring.io and download skeleton project.
 
+Add the below dependencies :
 
+<dependency>
+   <groupId>com.amazonaws</groupId>
+   <artifactId>aws-lambda-java-core</artifactId>
+   <version>1.2.3</version>
+  </dependency>
+  <dependency>
+   <groupId>com.amazonaws</groupId>
+   <artifactId>aws-lambda-java-events</artifactId>
+   <version>3.11.5</version>
+  </dependency>
+  <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sqs</artifactId>
+            <version>1.12.705</version>
+        </dependency>
+        
+        <dependency>
+   <groupId>com.amazonaws</groupId>
+   <artifactId>aws-java-sdk-dynamodb</artifactId>
+   <version>1.12.705</version>
 
+We will add the lambda event handler to process the message as shown below. Also, we have created dynamo db mapper using the endpoint and region details :
 
+<img width="1077" alt="Screenshot 2025-01-27 at 5 21 12 PM" src="https://github.com/user-attachments/assets/18ca60f8-d53a-4cd7-b621-aaf24d9f5594" />
 
+We have used spring boot JPA methods to save the details. 
+Employee Entity class is created and annotated with Dynamo DB table annotations.
+
+<img width="652" alt="Screenshot 2025-01-27 at 5 22 39 PM" src="https://github.com/user-attachments/assets/430d4c81-4419-47e5-90af-ddfcace878c8" />
+
+We can build the code.
+Next, Go to Lambda and create a new function and upload the jar file.
+Next, update the runtime settings as explained in the earlier lambda method.
+
+We can now deploy the lambda function.
+
+It's time to test the end to end functionality :
+
+Lets execute the API gateway using Postman. (In real world, this will be called by front end application) and upload the csv file.
+
+<img width="1389" alt="Screenshot 2025-01-27 at 5 26 38 PM" src="https://github.com/user-attachments/assets/7c4f9eff-3e9f-48a4-a993-70320f64c654" />
+
+Now, Lets examine the records in Dynamo DB table :
+
+<img width="1162" alt="Screenshot 2025-01-27 at 5 28 13 PM" src="https://github.com/user-attachments/assets/0f735d0e-ade2-4c03-a77a-7cfd19f9acac" />
+
+### Congratulations ! we have now successfully built a scalable full serverless asynchronous event based system using AWS services.
+
+Thank you
+Rahul Ahuja

@@ -88,6 +88,91 @@ Once it is deployed successdfully, we have not integrated API Gateway and S3.
 
 ## Step 3 : Create Lambda Function which will trigger when file gets uploaded to S3 and send the data to Amazon SQS.
 
+Lets create a Lambda function using spring boot. Navigate to https://start.spring.io and Download skeleton project.
+
+Add the below dependencies in pom.xml
+ <dependency>
+   <groupId>com.amazonaws</groupId>
+   <artifactId>aws-lambda-java-core</artifactId>
+   <version>1.2.3</version>
+  </dependency>
+  <dependency>
+   <groupId>com.amazonaws</groupId>
+   <artifactId>aws-lambda-java-events</artifactId>
+   <version>3.11.5</version>
+  </dependency>
+  <dependency>
+   <groupId>com.amazonaws</groupId>
+   <artifactId>aws-java-sdk-s3</artifactId>
+   <version>1.12.705</version>
+  </dependency>
+<dependency>
+    <groupId>org.apache.commons</groupId>
+    <artifactId>commons-csv</artifactId>
+    <version>1.13.0</version>
+</dependency>
+<dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sqs</artifactId>
+            <version>1.12.705</version>
+        </dependency>
+
+Also, we need to add a plugin to build jar for Lambda .
+
+<build>
+  <plugins>
+   <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <configuration>
+     <createDependencyReducedPom>false</createDependencyReducedPom>
+    </configuration>
+    <executions>
+     <execution>
+      <phase>package</phase>
+      <goals>
+       <goal>shade</goal>
+      </goals>
+     </execution>
+    </executions>
+   </plugin>
+  </plugins>
+ </build>
+
+
+Next, Create a LambdaHandler Class and add the code as shown below :
+
+<img width="866" alt="Screenshot 2025-01-27 at 2 57 02 PM" src="https://github.com/user-attachments/assets/3aeaedd0-4738-41dd-8502-b2b718adf3b4" />
+
+<img width="1082" alt="Screenshot 2025-01-27 at 2 57 39 PM" src="https://github.com/user-attachments/assets/9a932f80-871e-4a00-aafc-9346799c7757" />
+
+This shows we receive file from S3 using S3Event Object, process the file and save it as Java Object by parsing it using Open CSV parser.
+Once the java object is formed, it is being sent to SQS queue.
+
+In AWS console, Navigate to Lambda and Click Create Function. Select runtime as Java 17 and enter function name and click create.
+
+<img width="1685" alt="Screenshot 2025-01-27 at 2 59 31 PM" src="https://github.com/user-attachments/assets/4bb4f1bf-c9e8-4381-a85f-6a6bd2eeaaa0" />
+
+Now, lets upload the jar file, Click on Code tab and upload .zip or jar file.
+
+<img width="1712" alt="Screenshot 2025-01-27 at 3 00 35 PM" src="https://github.com/user-attachments/assets/3dae2209-2c6d-4147-a4dd-d980cd67ce02" />
+
+Upload our jar file and click save.
+
+one last thing, we need to edit runtime settings and enter fully qualified name of our handler class and method name as shown in the screenshot :
+
+<img width="1657" alt="Screenshot 2025-01-27 at 3 02 44 PM" src="https://github.com/user-attachments/assets/1a112bc9-fa73-477e-bb66-6768fc906fb0" />
+
+Now, Lets create Trigger for S3  . We can do this both ways, Create Event Notification in S3 or trigger in Lambda.
+
+Lets create in Lambda itself. Click Add trigger. Select service as S3. 
+
+<img width="1709" alt="Screenshot 2025-01-27 at 3 04 55 PM" src="https://github.com/user-attachments/assets/8b122251-7a7f-4195-b230-76cf8cd9d4e8" />
+
+We can verify that it is also now reflected in S3 event notification :
+
+<img width="1489" alt="Screenshot 2025-01-27 at 3 06 29 PM" src="https://github.com/user-attachments/assets/811eec6d-7b14-47b6-9b7d-f4e6d1a4cedc" />
+
 
 
 

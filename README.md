@@ -299,4 +299,5 @@ Now, Lets examine the records in Dynamo DB table :
 ### Congratulations ! we have now successfully built a scalable full serverless asynchronous event based system using AWS services.
 
 Thank you
+
 Rahul Ahuja

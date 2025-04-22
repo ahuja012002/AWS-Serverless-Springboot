@@ -9,10 +9,10 @@
   <relativePath/> <!-- lookup parent from repository -->
  </parent>
  <groupId>com.aws</groupId>
- <artifactId>lambda-trigger-s3</artifactId>
+ <artifactId>sqs-trigger-lambda</artifactId>
  <version>0.0.1-SNAPSHOT</version>
- <name>lambda-trigger-s3</name>
- <description>Demo project for Lambda Trigger on S3 Put</description>
+ <name>sqs-trigger-lambda</name>
+ <description>Demo project for Lambda Trigger on sqs</description>
  <properties>
   <java.version>17</java.version>
  </properties>
